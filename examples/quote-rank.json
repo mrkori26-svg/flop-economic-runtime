@@ -1,8 +1,8 @@
 {
   "now":"2026-09-26T21:00:00Z",
-  "request":{"service":"inference","asset":"FLOP","requiredCapabilities":["llm"],"maxUnitPrice":"5","minUnits":"100"},
+  "request":{"service":"inference","asset":"FLOP","unit":"token","comparisonProfile":"flop.inference-token.v1","requiredCapabilities":["llm"],"maxUnitPrice":"5","minUnits":"100"},
   "quotes":[
-    {"id":"q-a","provider":"did:key:provider-a","service":"inference","asset":"FLOP","maxUnits":"1000","unitPrice":"3","expiresAt":"2026-09-26T22:00:00Z","capabilities":["llm"]},
-    {"id":"q-b","provider":"did:key:provider-b","service":"inference","asset":"FLOP","maxUnits":"500","unitPrice":"4","expiresAt":"2026-09-26T22:00:00Z","capabilities":["llm"]}
+    {"id":"q-a","provider":"did:key:provider-a","service":"inference","asset":"FLOP","unit":"token","comparisonProfile":"flop.inference-token.v1","maxUnits":"1000","unitPrice":"3","expiresAt":"2026-09-26T22:00:00Z","capabilities":["llm"]},
+    {"id":"q-b","provider":"did:key:provider-b","service":"inference","asset":"FLOP","unit":"token","comparisonProfile":"flop.inference-token.v1","maxUnits":"500","unitPrice":"4","expiresAt":"2026-09-26T22:00:00Z","capabilities":["llm"]}
   ]
 }

@@ -48,7 +48,7 @@ export class EconomicRuntime {
     try{
       const result=await input.rail.settle({reservation,plan,ref:lock.ref});
       this.journal?.append("RAIL_SETTLED",{reservationId:reservation.id,railId:input.rail.id,railRef:lock.ref,txRef:result.txRef,gross:plan.gross},now);
-      this.treasury.markSettled(reservation.id,plan.gross,now);
+      this.treasury.markSettlement(reservation.id,plan,now);
       return {quote,reservation,price,plan,rail:{id:input.rail.id,lockRef:lock.ref,txRef:result.txRef}};
     }catch(error){
       try{

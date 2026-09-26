@@ -11,3 +11,17 @@ test("metered settlement returns residual atomically",()=>{const p=planSettlemen
 test("actual above locked max is rejected",()=>{assert.throws(()=>planSettlement({reservationId:"r1",asset:"FLOP",reserved:10000n,actual:10001n,policy:{feePpm:0n,residualPolicy:"RETURN_RESIDUAL"}}),/ACTUAL_EXCEEDS_RESERVED/);});
 
 test("ledger never settles more than reserved",()=>{const t=new Treasury({maxPerSettlement:1000n,maxDailySpend:1000n,allowedAssets:["FLOP"]});const r=t.reserve({counterparty:"did:a",asset:"FLOP",amount:1000n,expiresAt:"2026-09-27T00:00:00Z"});t.markSettled(r.id,700n);assert.equal(reconcile(t.ledger).balanced,true);});
+
+
+test("detailed settlement accounting conserves reserve into payout fee and residual",()=>{
+  const t=new Treasury({maxPerSettlement:10000n,maxDailySpend:20000n,allowedAssets:["FLOP"]});
+  const r=t.reserve({counterparty:"did:a",asset:"FLOP",amount:10000n,expiresAt:"2026-09-27T00:00:00Z"});
+  const plan=planSettlement({reservationId:r.id,asset:"FLOP",reserved:10000n,actual:6200n,policy:{feePpm:10000n,residualPolicy:"RETURN_RESIDUAL"}});
+  t.markSettlement(r.id,plan);
+  const result=reconcile(t.ledger);
+  assert.equal(result.balanced,true);
+  assert.equal(result.settled.FLOP,6200n);
+  assert.equal(result.fees.FLOP,62n);
+  assert.equal(result.payouts.FLOP,6138n);
+  assert.equal(result.residualReturns.FLOP,3800n);
+});

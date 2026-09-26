@@ -5,6 +5,8 @@ export type Quote = {
   provider: string;
   service: string;
   asset: string;
+  unit: string;
+  comparisonProfile: string;
   maxUnits: bigint;
   unitPrice: bigint;
   expiresAt: string;
@@ -65,7 +67,7 @@ export type SettlementPlan = {
 export type LedgerEntry = {
   id: string;
   at: string;
-  type: "RESERVE" | "RELEASE" | "SETTLE" | "FEE";
+  type: "RESERVE" | "RELEASE" | "SETTLE" | "FEE" | "PAYOUT" | "RESIDUAL_RETURN";
   asset: string;
   amount: bigint;
   counterparty?: string;

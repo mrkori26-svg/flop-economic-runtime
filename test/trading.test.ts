@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertOrderAgainstReference, makeOrder, matchLimitOrders } from "../src/trading.js";
+import { assertOrderAgainstReference, fillObligations, makeOrder, matchLimitOrders } from "../src/trading.js";
 
 test("price-time matching produces deterministic fill",()=>{
   const sell=makeOrder({id:"s1",owner:"seller",side:"SELL",asset:"FLOP",quoteAsset:"USD",quantity:10n,limitPrice:100n,createdAt:"2026-09-26T20:00:00Z"});
@@ -23,4 +23,12 @@ test("stale reference cannot admit an order",()=>{
 test("order too far from reference is blocked",()=>{
   const o=makeOrder({id:"b",owner:"x",side:"BUY",asset:"FLOP",quoteAsset:"USD",quantity:1n,limitPrice:120n,createdAt:"2026-09-26T20:00:00Z"});
   assert.throws(()=>assertOrderAgainstReference(o,{status:"FRESH",referencePrice:100,freshSources:["a","b"],rejectedSources:[]},{maxReferenceDeviationBps:500n}),/PRICE_DEVIATION/);
+});
+
+
+test("fill obligations preserve exact two-leg amounts",()=>{
+  const fill={buyOrderId:"b",sellOrderId:"s",asset:"FLOP",quoteAsset:"USD",quantity:6n,price:100n,quoteAmount:600n};
+  const obligations=fillObligations(fill);
+  assert.deepEqual(obligations,{buyerPays:{asset:"USD",amount:600n},sellerDelivers:{asset:"FLOP",amount:6n}});
+  assert.throws(()=>fillObligations({...fill,quoteAmount:601n}),/FILL_INVALID/);
 });

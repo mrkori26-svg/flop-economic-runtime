@@ -61,3 +61,15 @@ export function matchLimitOrders(orders: LimitOrder[]): Fill[] {
   }
   return fills;
 }
+
+
+export function fillObligations(fill: Fill): {
+  buyerPays: { asset: string; amount: bigint };
+  sellerDelivers: { asset: string; amount: bigint };
+} {
+  if (fill.quantity <= 0n || fill.price <= 0n || fill.quoteAmount !== fill.quantity * fill.price) throw new Error("FILL_INVALID");
+  return {
+    buyerPays: { asset: fill.quoteAsset, amount: fill.quoteAmount },
+    sellerDelivers: { asset: fill.asset, amount: fill.quantity },
+  };
+}

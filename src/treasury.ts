@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { LedgerEntry, Reservation, TreasuryPolicy } from "./types.js";
+import type { LedgerEntry, Reservation, SettlementPlan, TreasuryPolicy } from "./types.js";
 
 export class Treasury {
   readonly ledger: LedgerEntry[] = [];
@@ -29,6 +29,18 @@ export class Treasury {
     const r=this.mustReserved(id); if(amount>r.reserved) throw new Error("TREASURY_OVERSPEND");
     r.status="SETTLED";
     this.ledger.push({id:randomUUID(),at:now.toISOString(),type:"SETTLE",asset:r.asset,amount,counterparty:r.counterparty,ref:r.id});
+  }
+
+  markSettlement(id:string, plan:SettlementPlan, now=new Date()): void {
+    const r=this.mustReserved(id);
+    if(plan.asset!==r.asset || plan.reservationId!==r.id) throw new Error("TREASURY_SETTLEMENT_BINDING_MISMATCH");
+    if(plan.gross>r.reserved || plan.fee+plan.payout!==plan.gross || plan.gross+plan.residual!==r.reserved) throw new Error("TREASURY_SETTLEMENT_CONSERVATION_FAILURE");
+    r.status="SETTLED";
+    const common={at:now.toISOString(),asset:r.asset,counterparty:r.counterparty,ref:r.id};
+    this.ledger.push({id:randomUUID(),...common,type:"SETTLE",amount:plan.gross});
+    if(plan.payout>0n)this.ledger.push({id:randomUUID(),...common,type:"PAYOUT",amount:plan.payout});
+    if(plan.fee>0n)this.ledger.push({id:randomUUID(),...common,type:"FEE",amount:plan.fee});
+    if(plan.residual>0n)this.ledger.push({id:randomUUID(),...common,type:"RESIDUAL_RETURN",amount:plan.residual});
   }
 
   release(id:string, now=new Date()): void {

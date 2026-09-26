@@ -4,15 +4,15 @@ A fail-closed economic execution layer for autonomous agents.
 
 ```text
 QUOTE
-  â†“
+  Ã¢â€ â€œ
 PRICE GUARD
-  â†“
+  Ã¢â€ â€œ
 TREASURY RESERVE
-  â†“
+  Ã¢â€ â€œ
 EXECUTE / METER
-  â†“
+  Ã¢â€ â€œ
 SETTLE
-  â†“
+  Ã¢â€ â€œ
 RECONCILE
 ```
 
@@ -35,7 +35,7 @@ The runtime is deliberately separate from proving and transport. It answers a di
 ## Install
 
 ```bash
-npm install github:retardio73-boop/flop-economic-runtime#v0.2.0
+npm install github:retardio73-boop/flop-economic-runtime#v0.3.0
 ```
 
 ## Minimal use
@@ -64,9 +64,10 @@ const runtime = new EconomicRuntime(
 ## Differentiators
 
 - **Reserve before execution:** models never receive open-ended wallet authority.
-- **Freshness before trading:** stale/divergent reference data can stop economic actions before reservation.
+- **Freshness before trading:** stale/divergent reference data can stop economic actions before reservation; source quorum is unique-by-source and future-dated observations fail closed.
+- **Comparable quotes only:** asset, unit and comparison profile must match before prices can be ranked.
 - **Metered settlement:** reserved maximum and actual settlement are distinct first-class amounts.
-- **Explicit residuals and fees:** no stranded balance or implicit audit carve.
+- **Explicit residuals and fees:** no stranded balance or implicit audit carve; ledger conservation checks payout + fee + residual against the reservation.
 - **Matching is not settlement:** order fills remain separate from value movement.
 - **Transport is not money:** room/receipt/process status never upgrades itself to a balance change.
 - **Rail-neutral:** FLOP HTLC, EVM, channels, exchange settlement and test ledgers can share the same economic policy layer.
@@ -81,4 +82,5 @@ A successful process exit is not settlement. A room frame is not money. A fresh 
 ## Why this exists
 
 Current ecosystem work has strong coordination and emerging rail bindings, but material gaps remain around stale market references, variable settlement, fee accounting, treasury policy, and safe agent spending. This runtime isolates those concerns behind stable contracts so network-specific rails can be added without rewriting quote, treasury, metering or accounting logic.
+
 
