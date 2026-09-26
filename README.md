@@ -34,7 +34,7 @@ The runtime is deliberately separate from proving and transport. It answers a di
 ## Install
 
 ```bash
-npm install @flop-tools/economic-runtime
+npm install github:retardio73-boop/flop-economic-runtime#v0.1.0
 ```
 
 ## Minimal use
@@ -59,6 +59,17 @@ const runtime = new EconomicRuntime(
   { feePpm: 10_000n, residualPolicy: "RETURN_RESIDUAL" }
 );
 ```
+
+## Differentiators
+
+- **Reserve before execution:** models never receive open-ended wallet authority.
+- **Freshness before trading:** stale/divergent reference data can stop economic actions before reservation.
+- **Metered settlement:** reserved maximum and actual settlement are distinct first-class amounts.
+- **Explicit residuals and fees:** no stranded balance or implicit audit carve.
+- **Matching is not settlement:** order fills remain separate from value movement.
+- **Transport is not money:** room/receipt/process status never upgrades itself to a balance change.
+- **Rail-neutral:** FLOP HTLC, EVM, channels, exchange settlement and test ledgers can share the same economic policy layer.
+- **Zero runtime dependencies:** small surface for agents and CI.
 
 ## Claim boundaries
 

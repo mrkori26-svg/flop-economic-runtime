@@ -3,7 +3,7 @@
 ## CLI
 
 ```bash
-npm install @flop-tools/economic-runtime
+npm install github:retardio73-boop/flop-economic-runtime#v0.1.0
 npx flop-economic init --dir .economic
 npx flop-economic price-check --input .economic/price-check.json
 npx flop-economic settlement-plan --input .economic/settlement-plan.json
