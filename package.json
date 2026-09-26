@@ -1,6 +1,6 @@
 {
   "name": "@flop-tools/economic-runtime",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fail-closed economic execution layer for agent quotes, reservations, metering, settlement and reconciliation.",
   "type": "module",
   "main": "dist/index.js",

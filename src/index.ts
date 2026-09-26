@@ -8,3 +8,4 @@ export * from "./ledger.js";
 export * from "./memory-rail.js";
 export * from "./engine.js";
 export * from "./trading.js";
+export * from "./journal.js";

@@ -4,15 +4,15 @@ A fail-closed economic execution layer for autonomous agents.
 
 ```text
 QUOTE
-  ↓
+  â†“
 PRICE GUARD
-  ↓
+  â†“
 TREASURY RESERVE
-  ↓
+  â†“
 EXECUTE / METER
-  ↓
+  â†“
 SETTLE
-  ↓
+  â†“
 RECONCILE
 ```
 
@@ -28,13 +28,14 @@ The runtime is deliberately separate from proving and transport. It answers a di
 - explicit fee arithmetic and residual disposition
 - settlement rail adapter contract
 - append-friendly ledger primitives and reconciliation
+- hash-chained durable economic journal with unresolved-reservation recovery
 - CLI surface for price checking
 - zero runtime dependencies
 
 ## Install
 
 ```bash
-npm install github:retardio73-boop/flop-economic-runtime#v0.1.0
+npm install github:retardio73-boop/flop-economic-runtime#v0.2.0
 ```
 
 ## Minimal use
@@ -80,3 +81,4 @@ A successful process exit is not settlement. A room frame is not money. A fresh 
 ## Why this exists
 
 Current ecosystem work has strong coordination and emerging rail bindings, but material gaps remain around stale market references, variable settlement, fee accounting, treasury policy, and safe agent spending. This runtime isolates those concerns behind stable contracts so network-specific rails can be added without rewriting quote, treasury, metering or accounting logic.
+
