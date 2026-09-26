@@ -9,3 +9,5 @@ export * from "./memory-rail.js";
 export * from "./engine.js";
 export * from "./trading.js";
 export * from "./journal.js";
+export * from "./evidence-rail.js";
+export * from "./verifiable-settlement.js";

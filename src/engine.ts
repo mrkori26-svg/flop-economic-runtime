@@ -14,8 +14,8 @@ export class EconomicRuntime {
     readonly journal?: EconomicJournal
   ) {}
 
-  selectQuote(request:QuoteRequest, quotes:Quote[]): Quote {
-    const ranked=rankQuotes(request,quotes); if(!ranked[0]) throw new Error("NO_ELIGIBLE_QUOTE"); return ranked[0];
+  selectQuote(request:QuoteRequest, quotes:Quote[], now=new Date()): Quote {
+    const ranked=rankQuotes(request,quotes,now); if(!ranked[0]) throw new Error("NO_ELIGIBLE_QUOTE"); return ranked[0];
   }
 
   async execute(input:{
@@ -29,7 +29,7 @@ export class EconomicRuntime {
     const now=input.now??new Date();
     const price=evaluatePrice(input.observations,now,this.priceGuard);
     if(this.treasury.policy.requireFreshPrice && price.status!=="FRESH") throw new Error("PRICE_GUARD_BLOCKED");
-    const quote=this.selectQuote(input.request,input.quotes);
+    const quote=this.selectQuote(input.request,input.quotes,now);
     const maxCost=quote.maxUnits*quote.unitPrice;
     const reservation=this.treasury.reserve({counterparty:quote.provider,asset:quote.asset,amount:maxCost,expiresAt:quote.expiresAt,now});
     this.journal?.append("RESERVATION_AUTHORIZED",{reservationId:reservation.id,counterparty:reservation.counterparty,asset:reservation.asset,reserved:reservation.reserved,quoteId:quote.id},now);
