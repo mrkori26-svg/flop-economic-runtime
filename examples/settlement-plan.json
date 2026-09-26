@@ -1,0 +1,7 @@
+{
+  "reservationId":"reservation-1",
+  "asset":"FLOP",
+  "reserved":"10000",
+  "actual":"6200",
+  "policy":{"feePpm":"10000","residualPolicy":"RETURN_RESIDUAL"}
+}

@@ -1,0 +1,9 @@
+{
+  "now":"2026-09-26T21:00:00Z",
+  "config":{"maxAgeMs":30000,"maxDeviationBps":50,"minFreshSources":2},
+  "observations":[
+    {"source":"venue-a","price":225.03,"observedAt":"2026-09-26T20:59:55Z"},
+    {"source":"venue-b","price":225.08,"observedAt":"2026-09-26T20:59:57Z"},
+    {"source":"venue-c","price":225.01,"observedAt":"2026-09-26T20:59:58Z"}
+  ]
+}

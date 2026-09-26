@@ -1,0 +1,30 @@
+name: FLOP Economic Price Guard
+description: Fail closed when market reference data is stale, insufficient or divergent.
+inputs:
+  input:
+    description: Path to price-check JSON in the caller repository
+    required: true
+outputs:
+  status:
+    description: Price guard status
+    value: ${{ steps.guard.outputs.status }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+    - name: Install Economic Runtime
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --ignore-scripts && npm run build
+    - id: guard
+      name: Evaluate price guard
+      shell: bash
+      run: |
+        REPORT="$RUNNER_TEMP/flop-economic-price.json"
+        node "${{ github.action_path }}/dist/src/cli.js" price-check --input "${{ github.workspace }}/${{ inputs.input }}" > "$REPORT"
+        STATUS="$(node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(x.status)' "$REPORT")"
+        echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+        cat "$REPORT"
+        test "$STATUS" = "FRESH"
