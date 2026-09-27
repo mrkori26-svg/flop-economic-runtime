@@ -73,6 +73,14 @@ const runtime = new EconomicRuntime(
 - **Rail-neutral:** FLOP HTLC, EVM, channels, exchange settlement and test ledgers can share the same economic policy layer.
 - **Zero runtime dependencies:** small surface for agents and CI.
 
+## Verifiable settlement surfaces
+
+`flop-economic settlement-evidence` runs the deterministic NO_VALUE lane and emits a digest-bound receipt covering reserve/lock, execution, settlement observation, journal integrity, ledger reconciliation, conservation, and claim boundary.
+
+`flop-economic verify-testnet-settlement --input examples/testnet-settlement.json` verifies externally observed TESTNET lock/settlement evidence with exact reservation, rail, network, asset, amount, finality, chronology, and evidence-digest bindings.
+
+For CI consumers, `settlement-action/action.yml` exposes both modes and fails closed unless the result is `VERIFIED`.
+
 ## Claim boundaries
 
 This package does **not** claim a live FLOP HTLC RPC exists. `MemoryRail` is a deterministic development rail and moves no real value. Live rails must implement `SettlementRail` and preserve their own signing/key boundary.

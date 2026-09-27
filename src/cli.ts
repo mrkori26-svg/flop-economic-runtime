@@ -9,6 +9,7 @@ import { fillObligations, makeOrder, matchLimitOrders } from "./trading.js";
 import { EconomicJournal } from "./journal.js";
 import type { Quote } from "./types.js";
 import { runNoValueSettlementEvidence } from "./verifiable-settlement.js";
+import { verifyTestnetSettlement } from "./testnet-rail-contract.js";
 
 const [cmd,...args]=process.argv.slice(2);
 const flag=(n:string)=>{const i=args.indexOf(n);return i<0?undefined:args[i+1];};
@@ -57,6 +58,11 @@ if(cmd==="price-check"){
   if(!Object.values(checks).every(Boolean))process.exitCode=1;
 } else if(cmd==="settlement-evidence"){
   json(await runNoValueSettlementEvidence());
+} else if(cmd==="verify-testnet-settlement"){
+  const data=readJson(required("--input"));
+  const result=verifyTestnetSettlement(data.observations??[],data.expected??{});
+  json(result);
+  if(result.status!=="VERIFIED") process.exitCode=1;
 } else if(cmd==="init"){
   const dir=resolve(flag("--dir")??"economic-runtime");
   mkdirSync(dir,{recursive:true});
@@ -69,6 +75,6 @@ if(cmd==="price-check"){
   writeFileSync(resolve(dir,"README.md"),"# Economic Runtime integration\n\nRun flop-economic price-check --input price-check.json and flop-economic settlement-plan --input settlement-plan.json.\n");
   json({created:dir,files:["price-check.json","settlement-plan.json","README.md"]});
 } else {
-  process.stderr.write("usage: flop-economic price-check|quote-rank|settlement-plan|settlement-evidence|init [options]\n");
+  process.stderr.write("usage: flop-economic price-check|quote-rank|settlement-plan|settlement-evidence|verify-testnet-settlement|init [options]\n");
   process.exitCode=2;
 }
