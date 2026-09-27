@@ -12,3 +12,4 @@ export * from "./journal.js";
 export * from "./evidence-rail.js";
 export * from "./verifiable-settlement.js";
 export * from "./testnet-rail-contract.js";
+export * from "./settlement-verification.js";
