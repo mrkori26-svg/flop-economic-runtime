@@ -25,3 +25,18 @@ test("detailed settlement accounting conserves reserve into payout fee and resid
   assert.equal(result.payouts.FLOP,6138n);
   assert.equal(result.residualReturns.FLOP,3800n);
 });
+
+test("daily spend limit is enforced per asset",()=>{
+  const t=new Treasury({maxPerSettlement:1000n,maxDailySpend:1000n,allowedAssets:["FLOP","USD"]});
+  const now=new Date("2026-09-26T10:00:00Z");
+  const a=t.reserve({counterparty:"did:a",asset:"FLOP",amount:900n,expiresAt:"2026-09-27T00:00:00Z",now});
+  t.markSettled(a.id,900n,now);
+  const b=t.reserve({counterparty:"did:b",asset:"USD",amount:900n,expiresAt:"2026-09-27T00:00:00Z",now});
+  assert.equal(b.asset,"USD");
+});
+
+test("negative settlement amounts are rejected",()=>{
+  const t=new Treasury({maxPerSettlement:1000n,maxDailySpend:1000n,allowedAssets:["FLOP"]});
+  const r=t.reserve({counterparty:"did:a",asset:"FLOP",amount:100n,expiresAt:"2026-09-27T00:00:00Z"});
+  assert.throws(()=>t.markSettled(r.id,-1n),/AMOUNT_INVALID/);
+});

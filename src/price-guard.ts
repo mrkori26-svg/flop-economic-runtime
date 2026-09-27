@@ -16,6 +16,12 @@ function median(values: number[]): number {
 export function evaluatePrice(observations: PriceObservation[], now: Date, cfg: PriceGuardConfig): PriceDecision {
   const nowMs = now.getTime();
   const maxFutureSkewMs = cfg.maxFutureSkewMs ?? 1_000;
+  if (!Number.isFinite(nowMs)) throw new Error("PRICE_GUARD_NOW_INVALID");
+  if (!Number.isFinite(cfg.maxAgeMs) || cfg.maxAgeMs < 0) throw new Error("PRICE_GUARD_MAX_AGE_INVALID");
+  if (!Number.isFinite(cfg.maxDeviationBps) || cfg.maxDeviationBps < 0) throw new Error("PRICE_GUARD_DEVIATION_INVALID");
+  if (!Number.isInteger(cfg.minFreshSources) || cfg.minFreshSources < 1) throw new Error("PRICE_GUARD_QUORUM_INVALID");
+  if (!Number.isFinite(maxFutureSkewMs) || maxFutureSkewMs < 0) throw new Error("PRICE_GUARD_FUTURE_SKEW_INVALID");
+
   const bySource = new Map<string, PriceObservation[]>();
   for (const observation of observations) {
     if (!observation.source) continue;

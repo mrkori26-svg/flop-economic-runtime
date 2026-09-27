@@ -43,13 +43,20 @@ export function assertOrderAgainstReference(order: LimitOrder, decision: PriceDe
 }
 
 export function matchLimitOrders(orders: LimitOrder[]): Fill[] {
-  const buys=orders.filter(x=>x.side==="BUY"&&x.remaining>0n).sort((a,b)=>a.limitPrice===b.limitPrice?a.createdAt.localeCompare(b.createdAt):a.limitPrice>b.limitPrice?-1:1);
-  const sells=orders.filter(x=>x.side==="SELL"&&x.remaining>0n).sort((a,b)=>a.limitPrice===b.limitPrice?a.createdAt.localeCompare(b.createdAt):a.limitPrice<b.limitPrice?-1:1);
+  const working=orders.map((original,index)=>({original,index,order:{...original}}));
+  for(const {order} of working){
+    if(order.quantity<=0n || order.remaining<0n || order.remaining>order.quantity || order.limitPrice<=0n) throw new Error("ORDER_INVALID");
+    if(!Number.isFinite(Date.parse(order.createdAt))) throw new Error("ORDER_TIMESTAMP_INVALID");
+  }
+  const buys=working.filter(x=>x.order.side==="BUY"&&x.order.remaining>0n)
+    .sort((a,b)=>a.order.limitPrice===b.order.limitPrice?a.order.createdAt.localeCompare(b.order.createdAt):a.order.limitPrice>b.order.limitPrice?-1:1);
+  const sells=working.filter(x=>x.order.side==="SELL"&&x.order.remaining>0n)
+    .sort((a,b)=>a.order.limitPrice===b.order.limitPrice?a.order.createdAt.localeCompare(b.order.createdAt):a.order.limitPrice<b.order.limitPrice?-1:1);
   const fills:Fill[]=[];
   let bi=0,si=0;
   while(bi<buys.length&&si<sells.length){
-    const buy=buys[bi]!, sell=sells[si]!;
-    if(buy.asset!==sell.asset||buy.quoteAsset!==sell.quoteAsset){throw new Error("ORDERBOOK_PAIR_MIXED");}
+    const buy=buys[bi]!.order, sell=sells[si]!.order;
+    if(buy.asset!==sell.asset||buy.quoteAsset!==sell.quoteAsset) throw new Error("ORDERBOOK_PAIR_MIXED");
     if(buy.limitPrice<sell.limitPrice) break;
     if(buy.owner===sell.owner) throw new Error("SELF_TRADE_BLOCKED");
     const qty=buy.remaining<sell.remaining?buy.remaining:sell.remaining;
@@ -59,9 +66,9 @@ export function matchLimitOrders(orders: LimitOrder[]): Fill[] {
     if(buy.remaining===0n)bi++;
     if(sell.remaining===0n)si++;
   }
+  for(const {original,order} of working) original.remaining=order.remaining;
   return fills;
 }
-
 
 export function fillObligations(fill: Fill): {
   buyerPays: { asset: string; amount: bigint };
