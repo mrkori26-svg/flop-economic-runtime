@@ -32,3 +32,13 @@ test("fill obligations preserve exact two-leg amounts",()=>{
   assert.deepEqual(obligations,{buyerPays:{asset:"USD",amount:600n},sellerDelivers:{asset:"FLOP",amount:6n}});
   assert.throws(()=>fillObligations({...fill,quoteAmount:601n}),/FILL_INVALID/);
 });
+
+test("failed batch matching does not partially mutate orders",()=>{
+  const buy=makeOrder({id:"b",owner:"buyer",side:"BUY",asset:"FLOP",quoteAsset:"USD",quantity:10n,limitPrice:110n,createdAt:"2026-09-26T20:00:00Z"});
+  const sell1=makeOrder({id:"s1",owner:"seller",side:"SELL",asset:"FLOP",quoteAsset:"USD",quantity:5n,limitPrice:100n,createdAt:"2026-09-26T19:59:00Z"});
+  const sell2=makeOrder({id:"s2",owner:"buyer",side:"SELL",asset:"FLOP",quoteAsset:"USD",quantity:5n,limitPrice:100n,createdAt:"2026-09-26T20:01:00Z"});
+  assert.throws(()=>matchLimitOrders([buy,sell1,sell2]),/SELF_TRADE_BLOCKED/);
+  assert.equal(buy.remaining,10n);
+  assert.equal(sell1.remaining,5n);
+  assert.equal(sell2.remaining,5n);
+});
