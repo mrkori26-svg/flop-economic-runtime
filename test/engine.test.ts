@@ -73,3 +73,23 @@ test("confirmed rail settlement is never released when local finalization fails"
   }),/SETTLEMENT_CONFIRMED_LOCAL_FINALIZATION_FAILED/);
   assert.equal(releaseCalls,0);
 });
+
+
+test("execution id blocks duplicate execution before a second rail reserve",async()=>{
+  const treasury=new Treasury({maxPerSettlement:1000n,maxDailySpend:5000n,allowedAssets:["FLOP"],requireFreshPrice:true});
+  const journal=new EconomicJournal(join(mkdtempSync(join(tmpdir(),"econ-idem-")),"journal.ndjson"));
+  let reserveCalls=0;
+  const rail:any={id:"idem",reserve:async()=>{reserveCalls++;return{ref:"l"}},settle:async()=>({txRef:"t"}),release:async()=>({txRef:"r"})};
+  const runtime=new EconomicRuntime(treasury,{maxAgeMs:30000,maxDeviationBps:100,minFreshSources:2},{feePpm:0n,residualPolicy:"RETURN_RESIDUAL"},journal);
+  const input:any={executionId:"exec:engine:0001",request:{service:"inference",asset:"FLOP",unit:"token",comparisonProfile:"flop.inference-token.v1"},quotes:[quote],observations:[{source:"a",price:1,observedAt:"2026-09-26T20:59:55Z"},{source:"b",price:1,observedAt:"2026-09-26T20:59:56Z"}],readings:[{quantity:1n,unit:"token",observedAt:"2026-09-26T20:59:57Z"}],rail,now:new Date("2026-09-26T21:00:00Z")};
+  await runtime.execute(input);
+  await assert.rejects(runtime.execute(input),/EXECUTION_REPLAY_BLOCKED/);
+  assert.equal(reserveCalls,1);
+});
+
+test("execution id fails closed without durable journal",async()=>{
+  const treasury=new Treasury({maxPerSettlement:1000n,maxDailySpend:5000n,allowedAssets:["FLOP"],requireFreshPrice:true});
+  const runtime=new EconomicRuntime(treasury,{maxAgeMs:30000,maxDeviationBps:100,minFreshSources:2},{feePpm:0n,residualPolicy:"RETURN_RESIDUAL"});
+  const rail:any={id:"idem",reserve:async()=>({ref:"l"}),settle:async()=>({txRef:"t"}),release:async()=>({txRef:"r"})};
+  await assert.rejects(runtime.execute({executionId:"exec:engine:0002",request:{service:"inference",asset:"FLOP",unit:"token",comparisonProfile:"flop.inference-token.v1"},quotes:[quote],observations:[{source:"a",price:1,observedAt:"2026-09-26T20:59:55Z"},{source:"b",price:1,observedAt:"2026-09-26T20:59:56Z"}],readings:[{quantity:1n,unit:"token",observedAt:"2026-09-26T20:59:57Z"}],rail,now:new Date("2026-09-26T21:00:00Z")}),/IDEMPOTENCY_REQUIRES_DURABLE_JOURNAL/);
+});
