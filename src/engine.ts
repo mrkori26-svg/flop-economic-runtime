@@ -42,8 +42,8 @@ export class EconomicRuntime {
     let plan;
     try {
       plan=planSettlement({reservationId:reservation.id,asset:reservation.asset,reserved:reservation.reserved,actual,policy:this.settlementPolicy});
-      this.journal?.append("RESERVATION_AUTHORIZED",{reservationId:reservation.id,counterparty:reservation.counterparty,asset:reservation.asset,reserved:reservation.reserved,quoteId:quote.id},now);
-      this.journal?.append("SETTLEMENT_PLANNED",{reservationId:reservation.id,gross:plan.gross,fee:plan.fee,payout:plan.payout,residual:plan.residual,policy:plan.policy},now);
+      this.journal?.append("RESERVATION_AUTHORIZED",{reservationId:reservation.id,counterparty:reservation.counterparty,asset:reservation.asset,reserved:reservation.reserved,createdAt:reservation.createdAt,expiresAt:reservation.expiresAt,quoteId:quote.id},now);
+      this.journal?.append("SETTLEMENT_PLANNED",{reservationId:reservation.id,asset:plan.asset,gross:plan.gross,fee:plan.fee,payout:plan.payout,residual:plan.residual,policy:plan.policy},now);
     } catch(error) {
       this.treasury.release(reservation.id,now);
       try { this.journal?.append("RESERVATION_RELEASED",{reservationId:reservation.id,reason:"pre_rail_validation_failed"},now); } catch {}
