@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { closeSync, mkdtempSync, openSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { EconomicJournal } from "../src/journal.js";
@@ -27,4 +27,26 @@ test("settled reservation is no longer unresolved",()=>{
   j.append("RAIL_LOCKED",{reservationId:"r1"});
   j.append("RAIL_SETTLED",{reservationId:"r1"});
   assert.deepEqual(j.unresolvedReservations(),[]);
+});
+
+
+test("execution claims are durable replay tombstones",()=>{
+  const root=mkdtempSync(join(tmpdir(),"flop-economic-claim-"));
+  const j=new EconomicJournal(join(root,"journal.ndjson"));
+  j.claimExecution("exec:test:0001",{service:"inference"});
+  assert.throws(()=>j.claimExecution("exec:test:0001",{service:"inference"}),/EXECUTION_REPLAY_BLOCKED/);
+  assert.equal(j.verify(),true);
+});
+
+test("journal append fails closed while another writer owns the lock",()=>{
+  const root=mkdtempSync(join(tmpdir(),"flop-economic-lock-"));
+  const path=join(root,"journal.ndjson");
+  const j=new EconomicJournal(path);
+  const fd=openSync(path+".append.lock","wx");
+  try {
+    assert.throws(()=>j.append("TEST",{}),/ECONOMIC_JOURNAL_BUSY/);
+  } finally {
+    closeSync(fd);
+    unlinkSync(path+".append.lock");
+  }
 });

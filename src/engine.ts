@@ -24,9 +24,12 @@ export class EconomicRuntime {
     observations:PriceObservation[];
     readings:MeterReading[];
     rail:SettlementRail;
+    executionId?:string;
     now?:Date;
   }){
     const now=input.now??new Date();
+    if(input.executionId && !this.journal) throw new Error("IDEMPOTENCY_REQUIRES_DURABLE_JOURNAL");
+    if(input.executionId) this.journal!.claimExecution(input.executionId,{service:input.request.service,asset:input.request.asset,unit:input.request.unit},now);
     const price=evaluatePrice(input.observations,now,this.priceGuard);
     if(this.treasury.policy.requireFreshPrice && price.status!=="FRESH") throw new Error("PRICE_GUARD_BLOCKED");
     const quote=this.selectQuote(input.request,input.quotes,now);
