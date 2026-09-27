@@ -1,4 +1,5 @@
-import { appendFileSync, existsSync, readFileSync } from "node:fs";
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { createHash } from "node:crypto";
 
 export type EconomicJournalRecord = {
@@ -44,14 +45,44 @@ export class EconomicJournal {
     return true;
   }
 
+  private withAppendLock<T>(fn:()=>T): T {
+    mkdirSync(dirname(this.path),{recursive:true});
+    const lockPath=this.path+".append.lock";
+    let fd:number;
+    try { fd=openSync(lockPath,"wx"); }
+    catch { throw new Error("ECONOMIC_JOURNAL_BUSY"); }
+    try { return fn(); }
+    finally {
+      closeSync(fd);
+      try { unlinkSync(lockPath); } catch {}
+    }
+  }
+
   append(type:string,payload:Record<string,unknown>,at=new Date()): EconomicJournalRecord {
-    const records=this.read();
-    if(records.length && !this.verify()) throw new Error("ECONOMIC_JOURNAL_INTEGRITY_FAILURE");
-    const previous=records.at(-1)?.hash??null;
-    const body={seq:records.length+1,at:at.toISOString(),type,payload:normalize(payload) as Record<string,unknown>,previousHash:previous};
-    const record={...body,hash:digestBody(body)};
-    appendFileSync(this.path,JSON.stringify(record)+"\n","utf8");
-    return record;
+    return this.withAppendLock(()=>{
+      const records=this.read();
+      if(records.length && !this.verify()) throw new Error("ECONOMIC_JOURNAL_INTEGRITY_FAILURE");
+      const previous=records.at(-1)?.hash??null;
+      const body={seq:records.length+1,at:at.toISOString(),type,payload:normalize(payload) as Record<string,unknown>,previousHash:previous};
+      const record={...body,hash:digestBody(body)};
+      appendFileSync(this.path,JSON.stringify(record)+"\n","utf8");
+      return record;
+    });
+  }
+
+  claimExecution(executionId:string,payload:Record<string,unknown>,at=new Date()): EconomicJournalRecord {
+    if(!/^[A-Za-z0-9._:-]{8,200}$/.test(executionId)) throw new Error("EXECUTION_ID_INVALID");
+    mkdirSync(dirname(this.path),{recursive:true});
+    const claimPath=this.path+".exec."+createHash("sha256").update(executionId).digest("hex")+".claim";
+    let fd:number;
+    try { fd=openSync(claimPath,"wx"); }
+    catch { throw new Error("EXECUTION_REPLAY_BLOCKED"); }
+    try {
+      writeFileSync(fd,JSON.stringify({executionId,claimedAt:at.toISOString()}),"utf8");
+      return this.append("EXECUTION_CLAIMED",{executionId,...payload},at);
+    } finally {
+      closeSync(fd);
+    }
   }
 
   unresolvedReservations(): string[] {
