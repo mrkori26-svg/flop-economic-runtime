@@ -1,0 +1,46 @@
+name: FLOP Economic Settlement Evidence
+description: Reproduce NO_VALUE settlement evidence or verify externally observed TESTNET settlement evidence.
+inputs:
+  mode:
+    description: no-value or testnet
+    required: true
+    default: no-value
+  input:
+    description: Caller-relative JSON path for testnet mode
+    required: false
+outputs:
+  status:
+    description: VERIFIED or UNVERIFIED
+    value: ${{ steps.verify.outputs.status }}
+  report:
+    description: Path to the generated settlement report
+    value: ${{ steps.verify.outputs.report }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+    - name: Build Economic Runtime
+      shell: bash
+      working-directory: ${{ github.action_path }}/..
+      run: npm ci --ignore-scripts && npm run build
+    - id: verify
+      name: Verify settlement evidence
+      shell: bash
+      run: |
+        REPORT="$RUNNER_TEMP/flop-economic-settlement.json"
+        if [ "${{ inputs.mode }}" = "no-value" ]; then
+          node "${{ github.action_path }}/../dist/src/cli.js" settlement-evidence > "$REPORT"
+        elif [ "${{ inputs.mode }}" = "testnet" ]; then
+          test -n "${{ inputs.input }}"
+          node "${{ github.action_path }}/../dist/src/cli.js" verify-testnet-settlement --input "${{ github.workspace }}/${{ inputs.input }}" > "$REPORT"
+        else
+          echo "unsupported mode: ${{ inputs.mode }}" >&2
+          exit 2
+        fi
+        STATUS="$(node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(x.status)' "$REPORT")"
+        echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+        echo "report=$REPORT" >> "$GITHUB_OUTPUT"
+        cat "$REPORT"
+        test "$STATUS" = "VERIFIED"
