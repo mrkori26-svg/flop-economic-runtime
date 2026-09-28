@@ -54,9 +54,10 @@ export class EconomicRuntime {
     try{
       lock=await input.rail.reserve({reservation});
     }catch(error){
-      this.treasury.release(reservation.id,now);
-      try { this.journal?.append("RESERVATION_RELEASED",{reservationId:reservation.id,reason:"rail_reserve_failed"},now); } catch {}
-      throw error;
+      // A rejected promise can follow a successful remote lock. Keep its budget
+      // reserved until independent reconciliation proves the outcome.
+      try { this.journal?.append("SETTLEMENT_UNCERTAIN",{reservationId:reservation.id,railId:input.rail.id,phase:"reserve",reason:"rail_reserve_outcome_unknown"},now); } catch {}
+      throw new Error("RAIL_RESERVE_UNCERTAIN",{cause:error});
     }
 
     try {
@@ -77,15 +78,10 @@ export class EconomicRuntime {
     try{
       result=await input.rail.settle({reservation,plan,ref:lock.ref});
     }catch(error){
-      try{
-        const released=await input.rail.release({reservation,ref:lock.ref});
-        this.treasury.release(reservation.id,now);
-        try { this.journal?.append("RESERVATION_RELEASED",{reservationId:reservation.id,railId:input.rail.id,railRef:lock.ref,txRef:released.txRef,reason:"settlement_failed"},now); } catch {}
-      }catch(releaseError){
-        try { this.journal?.append("SETTLEMENT_UNCERTAIN",{reservationId:reservation.id,railId:input.rail.id,railRef:lock.ref,reason:releaseError instanceof Error?releaseError.message:"release_failed"},now); } catch {}
-        throw new Error("SETTLEMENT_FAILED_RELEASE_UNCERTAIN",{cause:error});
-      }
-      throw error;
+      // Never compensate a timeout with another external effect: settlement
+      // may already have succeeded even though its acknowledgement was lost.
+      try { this.journal?.append("SETTLEMENT_UNCERTAIN",{reservationId:reservation.id,railId:input.rail.id,railRef:lock.ref,phase:"settle",reason:"rail_settlement_outcome_unknown"},now); } catch {}
+      throw new Error("SETTLEMENT_UNCERTAIN",{cause:error});
     }
 
     // A successful rail.settle() must never be "undone" because local bookkeeping fails.
