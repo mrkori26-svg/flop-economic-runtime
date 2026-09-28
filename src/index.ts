@@ -10,6 +10,7 @@ export * from "./engine.js";
 export * from "./trading.js";
 export * from "./journal.js";
 export * from "./recovery.js";
+export * from "./reconciliation.js";
 export * from "./evidence-rail.js";
 export * from "./verifiable-settlement.js";
 export * from "./testnet-rail-contract.js";
