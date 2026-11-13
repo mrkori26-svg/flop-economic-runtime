@@ -80,6 +80,8 @@ export async function reconcileReservationFromRail(input:{
   if(typeof rail.observe!=="function") throw new Error("RECONCILIATION_OBSERVATION_UNAVAILABLE");
 
   const observed=await rail.observe(railRef);
+  if (!observed || !["LOCKED","SETTLED","RELEASED","UNKNOWN"].includes(observed.status))
+    throw new Error("RECONCILIATION_STATUS_INVALID");
   if(observed.status==="UNKNOWN") return {reservationId,railId,railRef,observedStatus:"UNKNOWN",status:"PENDING",durable:false};
   const expected=observed.status==="SETTLED" ? settlementPlan(records,reservationId).gross : reservation.reserved;
   if(observed.amount===undefined) throw new Error("RECONCILIATION_AMOUNT_REQUIRED");

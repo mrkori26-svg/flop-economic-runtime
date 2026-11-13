@@ -91,3 +91,10 @@ test("terminal observation without exact amount fails closed",async()=>{
     assert.equal(journal.read().length,count);
   }
 });
+
+test("unrecognized external observation cannot release a reservation",async()=>{
+ const {journal,treasury}=fixture();const count=journal.read().length;
+ await assert.rejects(reconcileReservationFromRail({reservationId:"r1",treasury,journal,rail:observedRail("UNRECOGNIZED" as any,200n),now:at}),/RECONCILIATION_STATUS_INVALID/);
+ assert.equal(treasury.reservations.get("r1")!.status,"RESERVED");
+ assert.equal(journal.read().length,count);
+});
